@@ -26,7 +26,7 @@ class BuiltWith:
             params += f'&OFFSET={offset}'
 
         path = os.path.join(self._base_url, path) + '?' + params
-        logging.debug(f'URL: {path}')
+        logging.warning(f'URL: {path}')
 
         response = requests.get(path)
         response.raise_for_status()
@@ -37,8 +37,8 @@ class BuiltWith:
         has_more = (offset != 'END')
         offset = offset if has_more else None
 
-        logging.debug(f'offset: {offset}')
-        logging.debug(f'has_more: {has_more}')
+        logging.warning(f'offset: {offset}')
+        logging.warning(f'has_more: {has_more}')
 
         return results, offset, has_more
 
@@ -55,7 +55,7 @@ class BuiltWith:
 @functions_framework.http
 def builtwith(request):
     request_json = request.get_json()
-    logging.debug(f'request: {request_json}')
+    logging.warning(f'request: {request_json}')
 
     state = request_json.get('state')
     if state is None:

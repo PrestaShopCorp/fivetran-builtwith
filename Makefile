@@ -1,7 +1,7 @@
 .PHONY: run test
 
 run:
-	@LOG_LEVEL=DEBUG functions-framework --target builtwith --debug
+	@LOG_LEVEL=WARNING functions-framework --target builtwith --debug
 
 test:
 	@curl -X POST localhost:8080 \
