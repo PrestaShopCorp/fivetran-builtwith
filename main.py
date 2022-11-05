@@ -1,9 +1,14 @@
 import functions_framework
 import functools
 import requests
+import logging
 import os
 
-TECHS = ['PrestaShop']
+DEBUG = 0
+
+TECHS = {
+    'prestashop': 'PrestaShop'
+}
 
 
 class BuiltWith:
@@ -11,35 +16,45 @@ class BuiltWith:
         self._base_url = 'https://api.builtwith.com'
         self._api_key = api_key
 
-    def _get(self, path, state, params={}):
-        params = params | {'KEY': self._api_key, 'META': 'yes', 'ALL': 'true'}
+    def _get(self, path, offset, params={}):
+        params = {'KEY': self._api_key} | params
+        # 'META': 'yes'
+        # 'ALL': 'true'
+        params = "&".join("%s=%s" % (k, v) for k, v in params.items())
+        if offset is not None:
+            params += f'&OFFSET={offset}'
 
-        if state is not None:
-            params = params | {'OFFSET': state}
+        path = os.path.join(self._base_url, path) + '?' + params
+        logging.debug(f'URL: {path}')
 
-        path = os.path.join(self._base_url, path)
-        response = requests.get(path, params=params)
+        response = requests.get(path)
         response.raise_for_status()
         response_json = response.json()
 
         results = response_json.get('Results')
         offset = response_json.get('NextOffset')
-        has_more = offset is None
+        has_more = (offset != 'END')
+        offset = offset if has_more else None
 
-        return response_json, offset, has_more
+        logging.debug(f'offset: {offset}')
+        logging.debug(f'has_more: {has_more}')
 
-    def list(self, tech, state):
-        path = 'lists10/api.json'
+        return results, offset, has_more
+
+    def list(self, tech, offset):
+        path = 'lists11/api.json'
         params = {'TECH': tech}
-        results, state, has_more = self._get(path, state, params)
-        print(f'{tech}: {state}')
-        return results, state, has_more
+        results, offset, has_more = self._get(path, offset, params)
+        return results, offset, has_more
+
+    def listN(self, tech, offset, n):
+        pass
 
 
 @functions_framework.http
 def builtwith(request):
     request_json = request.get_json()
-    print(f'request: ${request_json}')
+    logging.debug(f'request: {request_json}')
 
     state = request_json.get('state')
     if state is None:
@@ -52,11 +67,7 @@ def builtwith(request):
 
     builtwith = BuiltWith(api_key)
 
-    schema = {
-        'prestashop': {
-            'primary_key': ['D']
-        }
-    }
+    schema = {k: {'primary_key': ['D']} for (k, v) in TECHS.items()}
 
     if request_json.get('setup_test'):
         return {
@@ -65,13 +76,13 @@ def builtwith(request):
             'hasMore': False
         }, 200
 
-    results = {builtwith.list(tech, state.get(tech)) for tech in TECHS}
+    results = {k: builtwith.list(v, state.get(k)) for (k, v) in TECHS.items()}
 
-    insert = {k: v[0] for (k, v) in results.iteritems()}
-    state = {k: v[1] for (k, v) in results.iteritems()}
+    insert = {k: v[0] for (k, v) in results.items()}
+    state = {k: v[1] for (k, v) in results.items()}
 
     has_more = functools.reduce(
-        lambda a, b: a or b, {k: v[1] for (k, v) in results.iteritems()})
+        lambda a, b: a or b, {k: v[2] for (k, v) in results.items()}, True)
 
     return {
         'state': state,
@@ -79,3 +90,5 @@ def builtwith(request):
         'insert': insert,
         'hasMore': has_more
     }, 200
+
+################################

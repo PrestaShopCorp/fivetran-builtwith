@@ -1,17 +1,17 @@
 .PHONY: run test
 
 run:
-	@functions-framework --target function --debug
+	@functions-framework --target builtwith --debug
 
 test:
 	@curl -X POST localhost:8080 \
 		  -H 'Content-Type: application/json' \
-		  -d '{"agent":"test" ,"state":{}, "secrets":{"api_id": "4b672892d8488213a38ff4c16feffbe7", "api_key": "ab9db70384485bed0c01b5e7b901e136"}}'
+		  -d '{"agent":"test" ,"state":{}, "secrets":{"api_key": "a099b87f-906d-446f-8ead-c3e56eb61105"}}'
 
 test-setup:
 	@curl -X POST localhost:8080 \
 		  -H 'Content-Type: application/json' \
-		  -d '{"agent":"test" ,"state":{}, "setup_test": true, "secrets":{"api_key": "011ca6b0-9222-420c-9a72-7329ee3344f6"}}'
+		  -d '{"agent":"test" ,"state":{}, "setup_test": true, "secrets":{"api_key": "a099b87f-906d-446f-8ead-c3e56eb61105"}}'
 
 
 deploy:
