@@ -45,6 +45,8 @@ class BuiltWith:
     def list(self, tech, offset):
         path = 'lists11/api.json'
         params = {'TECH': tech}
+        # since = '1%20Days%20Ago'
+        # params = params | {'SINCE': since}
         results, offset, has_more = self._get(path, offset, params)
         return results, offset, has_more
 
@@ -83,7 +85,7 @@ def builtwith(request):
     state = {k: v[1] for (k, v) in results.items()}
 
     has_more = functools.reduce(
-        lambda a, b: a or b, {k: v[2] for (k, v) in results.items()}, True)
+        lambda a, b: a or b, [v[2] for v in results.values()], False)
 
     return {
         'state': state,
@@ -91,5 +93,3 @@ def builtwith(request):
         'insert': insert,
         'hasMore': has_more
     }, 200
-
-################################
