@@ -11,7 +11,7 @@ data = {
     'agent': 'Fivetran Google Cloud Functions Connector/grafted_unwound/builtwith',
 }
 i = 0
-count = 0
+count = {'prestashop': 0, 'magento': 0}
 
 state = {}
 has_more = True
@@ -32,8 +32,10 @@ while has_more:
 
     insert = response_json.get('insert')
     prestashop = insert.get('prestashop')
+    magento = insert.get('magento')
 
-    count += len(prestashop)
+    count.update({'prestashop': count.get('prestashop') + len(prestashop),
+                 'magento': count.get('magento') + len(magento)})
     print(f'count: {count}')
 
     i += 1
