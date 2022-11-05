@@ -8,6 +8,7 @@ data = {
     'secrets': {'api_key': 'a099b87f-906d-446f-8ead-c3e56eb61105'},
     'agent': 'Fivetran Google Cloud Functions Connector/grafted_unwound/builtwith',
 }
+i = 0
 count = 0
 
 state = {}
@@ -17,7 +18,7 @@ while has_more:
     response = requests.post(HOST, json=data)
     response_json = response.json()
 
-    file_name = FILE_PREFIX + '_' + str(count) + '.json'
+    file_name = FILE_PREFIX + '_' + f'{i:05}' + '_' + str(count) + '.json'
     with open(file_name, 'w') as f:
         f.write(json.dumps(response_json, indent=4))
 
@@ -29,5 +30,9 @@ while has_more:
 
     insert = response_json.get('insert')
     prestashop = insert.get('prestashop')
+
     count += len(prestashop)
     print(f'count: {count}')
+
+    i += 1
+    print(f'i: {i}')

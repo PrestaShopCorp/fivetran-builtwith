@@ -4,7 +4,8 @@ import requests
 import logging
 import os
 
-DEBUG = 0
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
+logging.basicConfig(level=LOG_LEVEL)
 
 TECHS = {
     'prestashop': 'PrestaShop'
