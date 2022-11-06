@@ -3,10 +3,10 @@ import functools
 import requests
 import os
 
-TECHS = {
-    'prestashop': 'PrestaShop',
-    'magento': 'Magento',
-}
+TECHS = [
+    {'id': 'prestashop', 'tech': 'PrestaShop'},
+    {'id': 'magento', 'tech': 'Magento'},
+]
 
 
 class BuiltWith:
@@ -15,7 +15,8 @@ class BuiltWith:
         self._api_key = api_key
 
     def list(self, tech, offset):
-        params = {'KEY': self._api_key, 'TECH': tech, 'META': 'yes'}
+        params = {'KEY': self._api_key, 'TECH': tech,
+                  'META': 'yes', 'SINCE': '30%20Days%20Ago'}
         params = "&".join("%s=%s" % (key, value)
                           for key, value in params.items())
         if offset is not None:
@@ -28,12 +29,16 @@ class BuiltWith:
         response.raise_for_status()
         response_json = response.json()
 
-        result = response_json.get('Results')
+        data = response_json.get('Results')
         offset = response_json.get('NextOffset')
         has_more = (offset != 'END')
         offset = offset if has_more else None
 
-        return result, offset, has_more
+        return {
+            'data': data,
+            'offset': offset,
+            'has_more': has_more,
+        }
 
 
 @functions_framework.http
@@ -52,7 +57,7 @@ def builtwith(request):
 
     builtwith = BuiltWith(api_key)
 
-    schema = {key: {'primary_key': ['D']} for key in TECHS.keys()}
+    schema = {tech.get('id'): {'primary_key': ['D']} for tech in TECHS}
 
     if request_json.get('setup_test'):
         return {
@@ -61,13 +66,22 @@ def builtwith(request):
             'hasMore': False
         }, 200
 
-    results = {key: builtwith.list(tech, state.get(key))
-               for (key, tech) in TECHS.items()}
-    insert = {key: result[0] for (key, result) in results.items()}
-    state = {key: result[1] for (key, result) in results.items()}
+    tech = state.get('tech')
+    tech = tech if tech is not None else 0
+    offset = state.get('offset')
 
-    has_more = functools.reduce(
-        lambda a, b: a or b, [result[2] for result in results.values()], False)
+    result = builtwith.list(TECHS[tech].get('tech'), offset)
+
+    data = result.get('data')
+    offset = result.get('offset')
+    has_more = result.get('has_more')
+
+    state = {
+        'tech': tech if has_more else (tech + 1) % len(TECHS),
+        'offset': offset,
+    }
+    insert = {TECHS[tech].get('id'): data}
+    has_more = has_more or (tech < len(TECHS) - 1)
 
     return {
         'state': state,

@@ -16,6 +16,8 @@ count = {'prestashop': 0, 'magento': 0}
 state = {}
 has_more = True
 while has_more:
+    print(f'########## {i:03} ##########')
+
     data.update({'state': state})
     response = requests.post(HOST, json=data)
     response_json = response.json()
@@ -25,18 +27,20 @@ while has_more:
         f.write(json.dumps(response_json, indent=4))
 
     state = response_json.get('state')
-    print(f'state: {state}')
+    tech = state.get('tech')
+    print(f'tech: {tech}')
+    offset = state.get('offset')
+    print(f'offset: {offset}')
 
     has_more = response_json.get('hasMore')
     print(f'has_more: {has_more}')
 
     insert = response_json.get('insert')
-    prestashop = insert.get('prestashop')
-    magento = insert.get('magento')
+    prestashop = insert.get('prestashop', [])
+    magento = insert.get('magento', [])
 
     count.update({'prestashop': count.get('prestashop') + len(prestashop),
                  'magento': count.get('magento') + len(magento)})
     print(f'count: {count}')
 
     i += 1
-    print(f'i: {i}')
