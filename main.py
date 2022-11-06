@@ -1,5 +1,4 @@
 import functions_framework
-import functools
 import requests
 import os
 
@@ -15,10 +14,8 @@ class BuiltWith:
         self._api_key = api_key
 
     def list(self, tech, offset):
-        params = {'KEY': self._api_key, 'TECH': tech,
-                  'META': 'yes', 'SINCE': '30%20Days%20Ago'}
-        params = "&".join("%s=%s" % (key, value)
-                          for key, value in params.items())
+        params = {'KEY': self._api_key, 'TECH': tech, 'META': 'yes'}
+        params = "&".join("%s=%s" % (k, v) for k, v in params.items())
         if offset is not None:
             params += f'&OFFSET={offset}'
 
@@ -68,6 +65,7 @@ def builtwith(request):
 
     tech = state.get('tech')
     tech = tech if tech is not None else 0
+
     offset = state.get('offset')
 
     result = builtwith.list(TECHS[tech].get('tech'), offset)
